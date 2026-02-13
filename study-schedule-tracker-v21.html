@@ -1,0 +1,1978 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Schedule Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f6f8fa;
+            --bg-tertiary: #eaeef2;
+            --bg-hover: #f3f4f6;
+            --border-color: #d0d7de;
+            --text-primary: #1f2328;
+            --text-secondary: #656d76;
+            --text-tertiary: #8b949e;
+            --accent-primary: #0969da;
+            --accent-secondary: #1f883d;
+            --accent-warning: #bf8700;
+            --accent-danger: #d1242f;
+            --accent-success: #1f883d;
+            --shadow: rgba(31, 35, 40, 0.15);
+            --shadow-lg: rgba(31, 35, 40, 0.25);
+            --tab-active: #fd8c73;
+            --schedule-morning: #ddf4ff;
+            --schedule-evening: #fff8c5;
+            --schedule-weekend: #dcffe4;
+            --progress-active: #1f883d;
+            --progress-inactive: #eaeef2;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --bg-hover: #30363d;
+            --border-color: #30363d;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --text-tertiary: #6e7681;
+            --accent-primary: #58a6ff;
+            --accent-secondary: #3fb950;
+            --accent-warning: #d29922;
+            --accent-danger: #f85149;
+            --accent-success: #3fb950;
+            --shadow: rgba(1, 4, 9, 0.5);
+            --shadow-lg: rgba(1, 4, 9, 0.7);
+            --tab-active: #ff7b72;
+            --schedule-morning: #1c2d41;
+            --schedule-evening: #3d2e00;
+            --schedule-weekend: #0d3a1b;
+            --progress-active: #3fb950;
+            --progress-inactive: #21262d;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background 0.3s ease, color 0.3s ease;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 18px;
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .theme-toggle, .notification-toggle {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .theme-toggle:hover, .notification-toggle:hover {
+            background: var(--bg-hover);
+            transform: translateY(-1px);
+        }
+
+        .notification-toggle {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .notification-toggle.active {
+            background: var(--accent-success);
+        }
+
+        /* Hamburger Menu */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            cursor: pointer;
+            padding: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .hamburger span {
+            width: 24px;
+            height: 2px;
+            background: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(5px, 5px);
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(5px, -5px);
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin: 32px 0 24px;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+            font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;
+        }
+
+        .tab:hover {
+            color: var(--text-primary);
+            background: var(--bg-hover);
+            border-radius: 8px 8px 0 0;
+        }
+
+        .tab.active {
+            color: var(--tab-active);
+            border-bottom-color: var(--tab-active);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Schedule Cards */
+        .schedule-grid {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .schedule-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .schedule-card.completed {
+            opacity: 0.6;
+            border-left: 4px solid var(--accent-success);
+        }
+
+        .schedule-card.in-progress {
+            border-left: 4px solid var(--accent-warning);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .schedule-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow);
+        }
+
+        .schedule-card.morning {
+            background: var(--schedule-morning);
+        }
+
+        .schedule-card.evening {
+            background: var(--schedule-evening);
+        }
+
+        .schedule-card.weekend {
+            background: var(--schedule-weekend);
+        }
+
+        .schedule-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .time-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--accent-primary);
+            background: var(--bg-tertiary);
+            padding: 6px 12px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .schedule-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .schedule-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .activity-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: start;
+            gap: 10px;
+            padding: 10px;
+            background: var(--bg-primary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .activity-item.completed {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+
+        .activity-item.completed::before {
+            content: '✓';
+            position: absolute;
+            left: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--accent-success);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .activity-item:hover {
+            background: var(--bg-hover);
+            transform: translateX(4px);
+        }
+
+        .activity-icon {
+            flex-shrink: 0;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .activity-text {
+            flex: 1;
+            font-size: 14px;
+            color: var(--text-primary);
+        }
+
+        .activity-text strong {
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .activity-progress {
+            width: 100%;
+            height: 4px;
+            background: var(--progress-inactive);
+            border-radius: 2px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .activity-progress-fill {
+            height: 100%;
+            background: var(--accent-success);
+            transition: width 1s ease;
+        }
+
+        /* Progress Tab */
+        .progress-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .progress-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .progress-circle {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 24px;
+            position: relative;
+        }
+
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.5s ease;
+        }
+
+        .progress-percentage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 48px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--accent-primary);
+        }
+
+        .progress-label {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 16px;
+            margin-top: 8px;
+        }
+
+        .progress-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-top: 32px;
+        }
+
+        .progress-stat {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .progress-stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--accent-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .progress-stat-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        .timeline-container {
+            margin-top: 40px;
+        }
+
+        .timeline-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: var(--text-primary);
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 19px;
+            top: 40px;
+            bottom: -24px;
+            width: 2px;
+            background: var(--border-color);
+        }
+
+        .timeline-item:last-child::before {
+            display: none;
+        }
+
+        .timeline-dot {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .timeline-dot.completed {
+            background: var(--accent-success);
+            border-color: var(--accent-success);
+            color: white;
+        }
+
+        .timeline-dot.in-progress {
+            background: var(--accent-warning);
+            border-color: var(--accent-warning);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 var(--accent-warning);
+            }
+            50% {
+                box-shadow: 0 0 0 8px transparent;
+            }
+        }
+
+        .timeline-content {
+            flex: 1;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .timeline-time {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            color: var(--accent-primary);
+            font-weight: 600;
+        }
+
+        .timeline-task {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 4px;
+        }
+
+        .timeline-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .timeline-subtasks {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .timeline-subtask {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .timeline-subtask.completed {
+            color: var(--accent-success);
+            text-decoration: line-through;
+        }
+
+        .timeline-subtask-checkbox {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border-color);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .timeline-subtask.completed .timeline-subtask-checkbox {
+            background: var(--accent-success);
+            border-color: var(--accent-success);
+        }
+
+        .timeline-subtask.completed .timeline-subtask-checkbox::after {
+            content: '✓';
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px var(--shadow);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--accent-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        /* Topics Grid */
+        .topics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .topic-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .topic-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+
+        .topic-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 32px var(--shadow-lg);
+        }
+
+        .topic-card:hover::after {
+            transform: scaleX(1);
+        }
+
+        .topic-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+
+        .topic-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+
+        .topic-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .topic-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            border: 1px solid var(--border-color);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            margin-top: 12px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            animation: modalFadeIn 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px var(--shadow-lg);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .close-modal {
+            background: var(--bg-tertiary);
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-modal:hover {
+            background: var(--accent-danger);
+            color: white;
+        }
+
+        .modal-body {
+            color: var(--text-primary);
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        .modal-footer {
+            margin-top: 24px;
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .btn-primary {
+            background: var(--accent-primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-secondary);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-hover);
+        }
+
+        /* Reset Button */
+        .reset-progress-btn {
+            background: var(--accent-danger);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 24px auto;
+        }
+
+        .reset-progress-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 12px;
+            }
+
+            h1 {
+                font-size: 16px;
+            }
+
+            .header-actions {
+                display: none;
+            }
+
+            .header-actions.mobile-show {
+                display: flex;
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .hamburger {
+                display: flex;
+            }
+
+            .tabs {
+                display: none;
+                flex-direction: column;
+                border-bottom: none;
+                position: fixed;
+                top: 70px;
+                left: 0;
+                right: 0;
+                background: var(--bg-secondary);
+                border: 1px solid var(--border-color);
+                border-radius: 0 0 12px 12px;
+                padding: 12px;
+                z-index: 99;
+                box-shadow: 0 8px 24px var(--shadow);
+            }
+
+            .tabs.mobile-show {
+                display: flex;
+            }
+
+            .tab {
+                width: 100%;
+                text-align: left;
+                border-radius: 8px;
+                border-bottom: none;
+            }
+
+            .tab.active {
+                background: var(--bg-hover);
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .topics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .progress-circle {
+                width: 150px;
+                height: 150px;
+            }
+
+            .progress-percentage {
+                font-size: 36px;
+            }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-tertiary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">📚</div>
+                <h1>Study Schedule Tracker</h1>
+            </div>
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="header-actions" id="headerActions">
+                <button class="theme-toggle" id="themeToggle">
+                    <span id="themeIcon">🌙</span>
+                    <span id="themeText">Dark</span>
+                </button>
+                <button class="notification-toggle" id="notificationToggle">
+                    <span>🔔</span>
+                    <span>Enable Alarms</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Stats -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalHours">27</div>
+                <div class="stat-label">Hours/Week</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">12</div>
+                <div class="stat-label">Weeks Total</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="todayProgress">0%</div>
+                <div class="stat-label">Today's Progress</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="streakCount">0</div>
+                <div class="stat-label">Day Streak</div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs" id="tabs">
+            <button class="tab active" data-tab="progress">📊 Today's Progress</button>
+            <button class="tab" data-tab="weekday">📅 Weekday Schedule</button>
+            <button class="tab" data-tab="weekend">🎯 Weekend Schedule</button>
+            <button class="tab" data-tab="topics">📖 Study Topics</button>
+        </div>
+
+        <!-- Progress Tab -->
+        <div class="tab-content active" id="progress">
+            <div class="progress-container">
+                <div class="progress-header">
+                    <div class="progress-circle">
+                        <svg class="progress-ring" width="200" height="200">
+                            <circle
+                                class="progress-ring-circle"
+                                stroke="var(--progress-inactive)"
+                                stroke-width="12"
+                                fill="transparent"
+                                r="90"
+                                cx="100"
+                                cy="100"
+                            />
+                            <circle
+                                id="progressCircle"
+                                class="progress-ring-circle"
+                                stroke="var(--accent-success)"
+                                stroke-width="12"
+                                fill="transparent"
+                                r="90"
+                                cx="100"
+                                cy="100"
+                                stroke-dasharray="565.48"
+                                stroke-dashoffset="565.48"
+                                stroke-linecap="round"
+                            />
+                        </svg>
+                        <div class="progress-percentage" id="progressPercentage">0%</div>
+                    </div>
+                    <div class="progress-label">Daily Completion</div>
+                </div>
+
+                <div class="timeline-container">
+                    <h2 class="timeline-title">Today's Timeline</h2>
+                    <div id="timelineContainer"></div>
+                </div>
+
+                <button class="reset-progress-btn" id="resetProgressBtn">
+                    <span>🔄</span>
+                    <span>Reset Today's Progress</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Weekday Schedule (content will be populated by JS) -->
+        <div class="tab-content" id="weekday">
+            <div class="schedule-grid" id="weekdayGrid"></div>
+        </div>
+
+        <!-- Weekend Schedule (content will be populated by JS) -->
+        <div class="tab-content" id="weekend">
+            <div class="schedule-grid" id="weekendGrid"></div>
+        </div>
+
+        <!-- Topics Tab (content will be populated by JS) -->
+        <div class="tab-content" id="topics">
+            <div class="topics-grid" id="topicsGrid"></div>
+        </div>
+    </div>
+
+    <!-- Notification Modal -->
+    <div class="modal" id="notificationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">🔔 Study Time!</h2>
+                <button class="close-modal" id="closeModal">×</button>
+            </div>
+            <div class="modal-body">
+                <p><strong id="modalTime"></strong></p>
+                <p id="modalMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="snoozeBtn">Snooze 5 min</button>
+                <button class="btn btn-primary" id="dismissBtn">Got it!</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== DATA STRUCTURES =====
+        const weekdaySchedule = [
+            {
+                id: 'morning-routine',
+                time: '06:00 - 07:00',
+                startTime: '06:00',
+                duration: 60,
+                title: 'Morning Routine + Exercise',
+                description: 'Start your day right with energy and focus',
+                type: 'morning',
+                activities: [
+                    { icon: '🛏️', text: '<strong>06:00</strong> - Wake up (no snooze!)', duration: 15 },
+                    { icon: '🏃', text: '<strong>30 min</strong> - Exercise or brisk walk (Mon/Wed/Fri: jog, Tue/Thu: nature walk)', duration: 30 },
+                    { icon: '🍳', text: '<strong>15 min</strong> - Breakfast prep + hydration', duration: 15 }
+                ]
+            },
+            {
+                id: 'study-block-1',
+                time: '07:00 - 08:30',
+                startTime: '07:00',
+                duration: 90,
+                title: 'Study Block 1 - Deep Learning',
+                description: 'Your GOLDEN hour - Use for hardest concepts',
+                type: 'morning',
+                activities: [
+                    { icon: '🧠', text: '<strong>Focus:</strong> Security concepts, Backend architecture, New frameworks', duration: 30 },
+                    { icon: '✍️', text: '<strong>Method:</strong> Pomodoro (25 min focus + 5 min break × 3)', duration: 30 },
+                    { icon: '💡', text: '<strong>Activities:</strong> Active note-taking, Code along, Ask "Why?"', duration: 30 }
+                ]
+            },
+            {
+                id: 'breakfast',
+                time: '08:30 - 09:00',
+                startTime: '08:30',
+                duration: 30,
+                title: 'Breakfast + Mental Break',
+                description: 'Fuel your body and reset your mind',
+                type: 'default',
+                activities: [
+                    { icon: '🥗', text: 'Protein + complex carbs breakfast', duration: 15 },
+                    { icon: '🚫', text: 'NO screens - let mind wander', duration: 10 },
+                    { icon: '🤔', text: 'Review mental notes of what you learned', duration: 5 }
+                ]
+            },
+            {
+                id: 'review',
+                time: '09:00 - 09:45',
+                startTime: '09:00',
+                duration: 45,
+                title: 'Quick Review + Work Prep',
+                description: 'Spaced repetition and preparation',
+                type: 'default',
+                activities: [
+                    { icon: '📝', text: '<strong>15 min</strong> - Review previous day\'s notes', duration: 15 },
+                    { icon: '📧', text: '<strong>15 min</strong> - Check emails, messages', duration: 15 },
+                    { icon: '🎯', text: '<strong>15 min</strong> - Set intentions for work day', duration: 15 }
+                ]
+            },
+            {
+                id: 'work',
+                time: '10:00 - 19:00',
+                startTime: '10:00',
+                duration: 540,
+                title: 'Work Time',
+                description: 'Be fully present and observe how concepts apply',
+                type: 'default',
+                activities: [
+                    { icon: '🎯', text: 'Stay focused and present', duration: 270 },
+                    { icon: '🍽️', text: 'Use lunch break to walk if possible', duration: 60 },
+                    { icon: '📓', text: 'Take mental notes of things to explore later', duration: 210 }
+                ]
+            },
+            {
+                id: 'transition',
+                time: '19:00 - 19:30',
+                startTime: '19:00',
+                duration: 30,
+                title: 'Commute/Transition',
+                description: 'Decompress and shift mindset',
+                type: 'default',
+                activities: [
+                    { icon: '😌', text: 'Decompress from work', duration: 15 },
+                    { icon: '🎧', text: 'Listen to tech podcasts or relaxing music', duration: 15 }
+                ]
+            },
+            {
+                id: 'evening-exercise',
+                time: '19:30 - 20:00',
+                startTime: '19:30',
+                duration: 30,
+                title: 'Exercise/Walk - Stress Relief',
+                description: 'Mental transition time',
+                type: 'evening',
+                activities: [
+                    { icon: '🚶', text: '30-minute walk or light yoga', duration: 30 }
+                ]
+            },
+            {
+                id: 'dinner',
+                time: '20:00 - 20:30',
+                startTime: '20:00',
+                duration: 30,
+                title: 'Dinner + Relaxation',
+                description: 'Mindful eating and rest',
+                type: 'default',
+                activities: [
+                    { icon: '🥘', text: 'Eat mindfully (no screens)', duration: 30 }
+                ]
+            },
+            {
+                id: 'study-block-2',
+                time: '20:30 - 22:00',
+                startTime: '20:30',
+                duration: 90,
+                title: 'Study Block 2 - Practice & Coding',
+                description: 'Hands-on practice - build and experiment',
+                type: 'evening',
+                activities: [
+                    { icon: '🛠️', text: '<strong>Focus:</strong> Build mini-projects based on morning concepts', duration: 30 },
+                    { icon: '🐛', text: '<strong>Activities:</strong> Code implementations, debug, refactor', duration: 30 },
+                    { icon: '✍️', text: '<strong>Practice:</strong> Write blog posts explaining concepts', duration: 30 }
+                ]
+            },
+            {
+                id: 'wind-down',
+                time: '22:00 - 22:30',
+                startTime: '22:00',
+                duration: 30,
+                title: 'Wind-Down Routine',
+                description: 'Prepare for restful sleep',
+                type: 'default',
+                activities: [
+                    { icon: '📔', text: '10 min - Reflect and journal what you learned', duration: 10 },
+                    { icon: '📅', text: '10 min - Prepare for tomorrow', duration: 10 },
+                    { icon: '🚫', text: '10 min - Personal hygiene, NO screens', duration: 10 }
+                ]
+            },
+            {
+                id: 'sleep',
+                time: '22:30 - 06:00',
+                startTime: '22:30',
+                duration: 450,
+                title: 'Sleep - Brain Consolidation',
+                description: '7.5 hours = five 90-minute sleep cycles',
+                type: 'default',
+                activities: [
+                    { icon: '🧠', text: 'Your brain consolidates everything you learned', duration: 225 },
+                    { icon: '💪', text: 'This is when learning becomes permanent', duration: 225 }
+                ]
+            }
+        ];
+
+        const weekendSchedule = [
+            {
+                id: 'weekend-morning',
+                time: '07:00 - 08:00',
+                startTime: '07:00',
+                duration: 60,
+                title: 'Morning Routine',
+                description: 'Gentle wake-up - you earned it!',
+                type: 'weekend',
+                activities: [
+                    { icon: '😊', text: 'Gentle wake-up (you earned it!)', duration: 20 },
+                    { icon: '🚶', text: '30-min morning walk or light exercise', duration: 30 },
+                    { icon: '🥞', text: 'Healthy breakfast', duration: 10 }
+                ]
+            },
+            {
+                id: 'weekend-study-1',
+                time: '08:00 - 09:30',
+                startTime: '08:00',
+                duration: 90,
+                title: 'Study Block 1 - New Concepts',
+                description: 'Deep dive into new topics',
+                type: 'weekend',
+                activities: [
+                    { icon: '🎓', text: 'Deep dive into new topic', duration: 30 },
+                    { icon: '📹', text: 'Watch tutorials, read documentation', duration: 30 },
+                    { icon: '📝', text: 'Take detailed notes', duration: 30 }
+                ]
+            },
+            {
+                id: 'weekend-break-1',
+                time: '09:30 - 10:00',
+                startTime: '09:30',
+                duration: 30,
+                title: 'Break',
+                description: 'Rest and recharge',
+                type: 'default',
+                activities: [
+                    { icon: '🧘', text: 'Stretch, hydrate, snack', duration: 30 }
+                ]
+            },
+            {
+                id: 'weekend-study-2',
+                time: '10:00 - 11:30',
+                startTime: '10:00',
+                duration: 90,
+                title: 'Study Block 2 - Continued Learning',
+                description: 'Continue exploration',
+                type: 'weekend',
+                activities: [
+                    { icon: '🔄', text: 'Continue new topic or related concept', duration: 30 },
+                    { icon: '💻', text: 'Code along with examples', duration: 30 },
+                    { icon: '🔬', text: 'Experiment and explore', duration: 30 }
+                ]
+            },
+            {
+                id: 'weekend-exercise',
+                time: '11:30 - 13:00',
+                startTime: '11:30',
+                duration: 90,
+                title: 'Exercise + Lunch',
+                description: 'Crucial for stress management',
+                type: 'weekend',
+                activities: [
+                    { icon: '🏃', text: '30-45 min: Gym, sports, hiking, cycling, swimming', duration: 45 },
+                    { icon: '🥗', text: 'Healthy lunch', duration: 30 },
+                    { icon: '🧠', text: 'Mental break from studying', duration: 15 }
+                ]
+            },
+            {
+                id: 'weekend-study-3',
+                time: '13:00 - 14:30',
+                startTime: '13:00',
+                duration: 90,
+                title: 'Study Block 3 - Project Work',
+                description: 'Build something functional',
+                type: 'weekend',
+                activities: [
+                    { icon: '🛠️', text: 'Work on your current weekly project', duration: 30 },
+                    { icon: '⚡', text: 'Apply what you learned this week', duration: 30 },
+                    { icon: '🎯', text: 'Build something functional', duration: 30 }
+                ]
+            },
+            {
+                id: 'weekend-break-2',
+                time: '14:30 - 15:00',
+                startTime: '14:30',
+                duration: 30,
+                title: 'Break',
+                description: 'Rest and recharge',
+                type: 'default',
+                activities: [
+                    { icon: '🚶', text: 'Walk around, stretch, healthy snack', duration: 30 }
+                ]
+            },
+            {
+                id: 'weekend-study-4',
+                time: '15:00 - 16:30',
+                startTime: '15:00',
+                duration: 90,
+                title: 'Study Block 4 - Review & Consolidation',
+                description: 'Consolidate weekly learning',
+                type: 'weekend',
+                activities: [
+                    { icon: '📅', text: '<strong>Sunday:</strong> Review entire week\'s learning', duration: 45 },
+                    { icon: '🔎', text: '<strong>Saturday:</strong> Continue project or explore topics', duration: 45 }
+                ]
+            },
+            {
+                id: 'weekend-personal',
+                time: '16:30 - 22:30',
+                startTime: '16:30',
+                duration: 360,
+                title: 'Personal Time - PROTECT THIS!',
+                description: 'Balance is essential for long-term success',
+                type: 'weekend',
+                activities: [
+                    { icon: '👥', text: 'Social activities, family, friends', duration: 120 },
+                    { icon: '🎮', text: 'Hobbies (non-tech), entertainment', duration: 120 },
+                    { icon: '😌', text: 'Rest and relaxation', duration: 120 }
+                ]
+            },
+            {
+                id: 'weekend-sleep',
+                time: '22:30 - 07:00',
+                startTime: '22:30',
+                duration: 510,
+                title: 'Sleep',
+                description: '8.5 hours - recharge for the week ahead',
+                type: 'default',
+                activities: []
+            }
+        ];
+
+        const topics = [
+            {
+                icon: '⚛️',
+                title: 'Next.js & React',
+                description: 'Modern frontend development with App Router, Server Components, and TypeScript',
+                tags: ['Next.js 14', 'React 18', 'TypeScript', 'Tailwind CSS'],
+                progress: 40,
+                weeks: 'Weeks 4-5'
+            },
+            {
+                icon: '🔐',
+                title: 'Backend Security',
+                description: 'Authentication, authorization, JWT, password hashing, and security best practices',
+                tags: ['JWT', 'bcrypt', 'Auth', 'Security'],
+                progress: 30,
+                weeks: 'Weeks 1-3'
+            },
+            {
+                icon: '🚀',
+                title: 'Express.js & Node.js',
+                description: 'Building secure RESTful APIs with Express, middleware, and error handling',
+                tags: ['Express', 'Node.js', 'REST API', 'Middleware'],
+                progress: 35,
+                weeks: 'Weeks 1-6'
+            },
+            {
+                icon: '🗄️',
+                title: 'Database & Prisma',
+                description: 'PostgreSQL, Prisma ORM, database design, migrations, and optimization',
+                tags: ['PostgreSQL', 'Prisma 7', 'SQL', 'Database Design'],
+                progress: 25,
+                weeks: 'Weeks 2-6'
+            },
+            {
+                icon: '🔒',
+                title: 'Web Security',
+                description: 'CORS, XSS, CSRF, SQL Injection prevention, security headers, and best practices',
+                tags: ['CORS', 'XSS', 'CSRF', 'Security Headers'],
+                progress: 20,
+                weeks: 'Weeks 3-5'
+            },
+            {
+                icon: '🔴',
+                title: 'Redis & Caching',
+                description: 'Session management, token blacklisting, caching strategies, and performance',
+                tags: ['Redis', 'Caching', 'Sessions', 'Performance'],
+                progress: 15,
+                weeks: 'Weeks 2-3'
+            },
+            {
+                icon: '🐘',
+                title: 'Laravel & PHP',
+                description: 'Laravel framework, MVC architecture, Eloquent ORM, and Laravel security',
+                tags: ['Laravel', 'PHP', 'MVC', 'Eloquent'],
+                progress: 0,
+                weeks: 'Weeks 7-10'
+            },
+            {
+                icon: '🔑',
+                title: 'Laravel Sanctum',
+                description: 'API authentication, token management, and authorization in Laravel',
+                tags: ['Sanctum', 'API Auth', 'Laravel', 'Tokens'],
+                progress: 0,
+                weeks: 'Weeks 8-9'
+            },
+            {
+                icon: '🐳',
+                title: 'Docker & Containers',
+                description: 'Containerization, Docker Compose, multi-container apps, and orchestration',
+                tags: ['Docker', 'Containers', 'Docker Compose', 'DevOps'],
+                progress: 0,
+                weeks: 'Week 11'
+            },
+            {
+                icon: '⚙️',
+                title: 'CI/CD & DevOps',
+                description: 'Continuous Integration, deployment pipelines, GitHub Actions, and automation',
+                tags: ['CI/CD', 'GitHub Actions', 'Automation', 'DevOps'],
+                progress: 0,
+                weeks: 'Week 11'
+            },
+            {
+                icon: '🔐',
+                title: 'DevOps Security',
+                description: 'Container security, secrets management, SSL/TLS, and server hardening',
+                tags: ['Security', 'SSL/TLS', 'Secrets', 'Hardening'],
+                progress: 0,
+                weeks: 'Week 12'
+            },
+            {
+                icon: '🌐',
+                title: 'Nginx & Reverse Proxy',
+                description: 'Web server configuration, reverse proxy, load balancing, and SSL setup',
+                tags: ['Nginx', 'Proxy', 'Load Balancing', 'SSL'],
+                progress: 0,
+                weeks: 'Week 12'
+            }
+        ];
+
+        // ===== STORAGE MANAGER =====
+        class StorageManager {
+            static save(key, data) {
+                try {
+                    localStorage.setItem(key, JSON.stringify(data));
+                } catch (e) {
+                    console.error('Failed to save to localStorage:', e);
+                }
+            }
+
+            static load(key, defaultValue = null) {
+                try {
+                    const data = localStorage.getItem(key);
+                    return data ? JSON.parse(data) : defaultValue;
+                } catch (e) {
+                    console.error('Failed to load from localStorage:', e);
+                    return defaultValue;
+                }
+            }
+
+            static remove(key) {
+                try {
+                    localStorage.removeItem(key);
+                } catch (e) {
+                    console.error('Failed to remove from localStorage:', e);
+                }
+            }
+        }
+
+        // ===== PROGRESS TRACKER =====
+        class ProgressTracker {
+            constructor() {
+                this.loadProgress();
+                this.startAutoProgress();
+            }
+
+            loadProgress() {
+                const savedDate = StorageManager.load('progressDate');
+                const today = new Date().toDateString();
+                
+                if (savedDate !== today) {
+                    // New day, reset progress
+                    this.progress = this.initializeProgress();
+                    this.saveProgress();
+                } else {
+                    // Load saved progress
+                    this.progress = StorageManager.load('dailyProgress', this.initializeProgress());
+                }
+            }
+
+            initializeProgress() {
+                const isWeekend = [0, 6].includes(new Date().getDay());
+                const schedule = isWeekend ? weekendSchedule : weekdaySchedule;
+                
+                const progress = {};
+                schedule.forEach(item => {
+                    progress[item.id] = {
+                        completed: false,
+                        startedAt: null,
+                        completedAt: null,
+                        activities: item.activities.map(() => ({ completed: false }))
+                    };
+                });
+                
+                return progress;
+            }
+
+            saveProgress() {
+                StorageManager.save('dailyProgress', this.progress);
+                StorageManager.save('progressDate', new Date().toDateString());
+            }
+
+            markActivityComplete(scheduleId, activityIndex) {
+                if (this.progress[scheduleId]) {
+                    this.progress[scheduleId].activities[activityIndex].completed = true;
+                    this.saveProgress();
+                    this.updateUI();
+                }
+            }
+
+            markScheduleComplete(scheduleId) {
+                if (this.progress[scheduleId]) {
+                    this.progress[scheduleId].completed = true;
+                    this.progress[scheduleId].completedAt = new Date().toISOString();
+                    this.progress[scheduleId].activities.forEach(a => a.completed = true);
+                    this.saveProgress();
+                    this.updateUI();
+                }
+            }
+
+            startSchedule(scheduleId) {
+                if (this.progress[scheduleId] && !this.progress[scheduleId].startedAt) {
+                    this.progress[scheduleId].startedAt = new Date().toISOString();
+                    this.saveProgress();
+                    this.updateUI();
+                }
+            }
+
+            getCompletionPercentage() {
+                const total = Object.keys(this.progress).length;
+                const completed = Object.values(this.progress).filter(p => p.completed).length;
+                return Math.round((completed / total) * 100);
+            }
+
+            getCurrentActivity() {
+                const now = new Date();
+                const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                
+                const isWeekend = [0, 6].includes(now.getDay());
+                const schedule = isWeekend ? weekendSchedule : weekdaySchedule;
+                
+                for (let item of schedule) {
+                    const [startHour, startMin] = item.startTime.split(':').map(Number);
+                    const endTime = this.addMinutes(item.startTime, item.duration);
+                    
+                    if (this.isTimeBetween(currentTime, item.startTime, endTime)) {
+                        return item;
+                    }
+                }
+                
+                return null;
+            }
+
+            addMinutes(time, minutes) {
+                const [hour, min] = time.split(':').map(Number);
+                const totalMinutes = hour * 60 + min + minutes;
+                const newHour = Math.floor(totalMinutes / 60) % 24;
+                const newMin = totalMinutes % 60;
+                return `${String(newHour).padStart(2, '0')}:${String(newMin).padStart(2, '0')}`;
+            }
+
+            isTimeBetween(current, start, end) {
+                return current >= start && current < end;
+            }
+
+            startAutoProgress() {
+                setInterval(() => {
+                    const currentActivity = this.getCurrentActivity();
+                    if (currentActivity && !this.progress[currentActivity.id].startedAt) {
+                        this.startSchedule(currentActivity.id);
+                    }
+                    
+                    // Auto-complete activities based on elapsed time
+                    this.autoCompleteActivities();
+                }, 60000); // Check every minute
+                
+                // Initial check
+                this.autoCompleteActivities();
+            }
+
+            autoCompleteActivities() {
+                const currentActivity = this.getCurrentActivity();
+                if (!currentActivity) return;
+                
+                const progressData = this.progress[currentActivity.id];
+                if (!progressData.startedAt) return;
+                
+                const startTime = new Date(progressData.startedAt);
+                const now = new Date();
+                const elapsed = (now - startTime) / 1000 / 60; // minutes
+                
+                let totalDuration = 0;
+                currentActivity.activities.forEach((activity, index) => {
+                    totalDuration += activity.duration;
+                    
+                    if (elapsed >= totalDuration && !progressData.activities[index].completed) {
+                        this.markActivityComplete(currentActivity.id, index);
+                    }
+                });
+                
+                // Mark entire schedule as complete if all activities are done
+                if (elapsed >= currentActivity.duration && !progressData.completed) {
+                    this.markScheduleComplete(currentActivity.id);
+                }
+            }
+
+            resetProgress() {
+                if (confirm('Are you sure you want to reset today\'s progress? This cannot be undone.')) {
+                    this.progress = this.initializeProgress();
+                    this.saveProgress();
+                    this.updateUI();
+                    location.reload();
+                }
+            }
+
+            updateUI() {
+                // Update progress circle
+                const percentage = this.getCompletionPercentage();
+                document.getElementById('progressPercentage').textContent = `${percentage}%`;
+                document.getElementById('todayProgress').textContent = `${percentage}%`;
+                
+                const circle = document.getElementById('progressCircle');
+                const circumference = 2 * Math.PI * 90;
+                const offset = circumference - (percentage / 100) * circumference;
+                circle.style.strokeDashoffset = offset;
+                
+                // Update timeline
+                this.renderTimeline();
+            }
+
+            renderTimeline() {
+                const isWeekend = [0, 6].includes(new Date().getDay());
+                const schedule = isWeekend ? weekendSchedule : weekdaySchedule;
+                const container = document.getElementById('timelineContainer');
+                
+                container.innerHTML = schedule.map(item => {
+                    const itemProgress = this.progress[item.id];
+                    const status = itemProgress.completed ? 'completed' : 
+                                 (itemProgress.startedAt ? 'in-progress' : 'pending');
+                    
+                    const subtasksHTML = item.activities.map((activity, index) => `
+                        <div class="timeline-subtask ${itemProgress.activities[index].completed ? 'completed' : ''}">
+                            <div class="timeline-subtask-checkbox"></div>
+                            <span>${activity.text}</span>
+                        </div>
+                    `).join('');
+                    
+                    return `
+                        <div class="timeline-item">
+                            <div class="timeline-dot ${status}">
+                                ${status === 'completed' ? '✓' : (status === 'in-progress' ? '⏱️' : '○')}
+                            </div>
+                            <div class="timeline-content">
+                                <div class="timeline-time">${item.time}</div>
+                                <div class="timeline-task">${item.title}</div>
+                                <div class="timeline-description">${item.description}</div>
+                                ${subtasksHTML ? `<div class="timeline-subtasks">${subtasksHTML}</div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        // ===== INITIALIZE =====
+        let progressTracker;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize progress tracker
+            progressTracker = new ProgressTracker();
+            progressTracker.updateUI();
+            
+            // Populate schedules
+            populateSchedule('weekdayGrid', weekdaySchedule);
+            populateSchedule('weekendGrid', weekendSchedule);
+            populateTopics();
+            
+            // Setup event listeners
+            setupThemeToggle();
+            setupTabs();
+            setupHamburger();
+            setupNotifications();
+            
+            // Reset progress button
+            document.getElementById('resetProgressBtn').addEventListener('click', () => {
+                progressTracker.resetProgress();
+            });
+            
+            // Update streak
+            updateStreak();
+        });
+
+        function populateSchedule(gridId, schedule) {
+            const grid = document.getElementById(gridId);
+            grid.innerHTML = schedule.map(item => {
+                const activitiesHTML = item.activities.map(activity => `
+                    <li class="activity-item">
+                        <span class="activity-icon">${activity.icon}</span>
+                        <span class="activity-text">${activity.text}</span>
+                    </li>
+                `).join('');
+                
+                return `
+                    <div class="schedule-card ${item.type}">
+                        <div class="schedule-header">
+                            <div>
+                                <div class="time-badge">
+                                    <span>⏰</span>
+                                    <span>${item.time}</span>
+                                </div>
+                                <h3 class="schedule-title">${item.title}</h3>
+                            </div>
+                        </div>
+                        <p class="schedule-description">${item.description}</p>
+                        ${activitiesHTML ? `<ul class="activity-list">${activitiesHTML}</ul>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function populateTopics() {
+            const grid = document.getElementById('topicsGrid');
+            grid.innerHTML = topics.map(topic => `
+                <div class="topic-card">
+                    <div class="topic-icon">${topic.icon}</div>
+                    <h3 class="topic-title">${topic.title}</h3>
+                    <p class="topic-description">${topic.description}</p>
+                    <div class="topic-tags">
+                        ${topic.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${topic.progress}%"></div>
+                    </div>
+                    <p style="margin-top: 8px; font-size: 12px; color: var(--text-tertiary);">${topic.weeks}</p>
+                </div>
+            `).join('');
+        }
+
+        function setupThemeToggle() {
+            const themeToggle = document.getElementById('themeToggle');
+            const themeIcon = document.getElementById('themeIcon');
+            const themeText = document.getElementById('themeText');
+            const html = document.documentElement;
+
+            const savedTheme = StorageManager.load('theme', 'light');
+            html.setAttribute('data-theme', savedTheme);
+            updateThemeButton(savedTheme);
+
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = html.getAttribute('data-theme');
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                html.setAttribute('data-theme', newTheme);
+                StorageManager.save('theme', newTheme);
+                updateThemeButton(newTheme);
+            });
+
+            function updateThemeButton(theme) {
+                if (theme === 'dark') {
+                    themeIcon.textContent = '☀️';
+                    themeText.textContent = 'Light';
+                } else {
+                    themeIcon.textContent = '🌙';
+                    themeText.textContent = 'Dark';
+                }
+            }
+        }
+
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const targetTab = tab.getAttribute('data-tab');
+                    
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(tc => tc.classList.remove('active'));
+                    
+                    tab.classList.add('active');
+                    document.getElementById(targetTab).classList.add('active');
+                    
+                    // Close hamburger menu on mobile
+                    const tabsContainer = document.getElementById('tabs');
+                    tabsContainer.classList.remove('mobile-show');
+                    const hamburger = document.getElementById('hamburger');
+                    hamburger.classList.remove('active');
+                });
+            });
+        }
+
+        function setupHamburger() {
+            const hamburger = document.getElementById('hamburger');
+            const tabs = document.getElementById('tabs');
+            const headerActions = document.getElementById('headerActions');
+
+            hamburger.addEventListener('click', () => {
+                hamburger.classList.toggle('active');
+                tabs.classList.toggle('mobile-show');
+            });
+        }
+
+        function setupNotifications() {
+            const notificationToggle = document.getElementById('notificationToggle');
+            let notificationsEnabled = StorageManager.load('notificationsEnabled', false);
+
+            if (notificationsEnabled) {
+                notificationToggle.classList.add('active');
+                notificationToggle.querySelector('span:last-child').textContent = 'Alarms Active';
+            }
+
+            notificationToggle.addEventListener('click', () => {
+                notificationsEnabled = !notificationsEnabled;
+                StorageManager.save('notificationsEnabled', notificationsEnabled);
+                
+                if (notificationsEnabled) {
+                    notificationToggle.classList.add('active');
+                    notificationToggle.querySelector('span:last-child').textContent = 'Alarms Active';
+                    
+                    if ('Notification' in window && Notification.permission === 'default') {
+                        Notification.requestPermission();
+                    }
+                } else {
+                    notificationToggle.classList.remove('active');
+                    notificationToggle.querySelector('span:last-child').textContent = 'Enable Alarms';
+                }
+            });
+
+            // Check for notifications every minute
+            setInterval(() => {
+                if (notificationsEnabled) {
+                    checkForNotifications();
+                }
+            }, 60000);
+        }
+
+        function checkForNotifications() {
+            const now = new Date();
+            const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            
+            const currentActivity = progressTracker.getCurrentActivity();
+            if (currentActivity) {
+                const lastNotification = StorageManager.load('lastNotification');
+                if (lastNotification !== currentActivity.id) {
+                    showNotification(currentActivity);
+                    StorageManager.save('lastNotification', currentActivity.id);
+                }
+            }
+        }
+
+        function showNotification(activity) {
+            // Play bell sound
+            createBellSound();
+            
+            // Show browser notification
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('Study Schedule', {
+                    body: `${activity.time} - ${activity.title}`,
+                    icon: '📚',
+                    tag: 'study-alarm'
+                });
+            }
+        }
+
+        function createBellSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            } catch (e) {
+                console.log('Audio not supported');
+            }
+        }
+
+        function updateStreak() {
+            const streak = StorageManager.load('streak', 0);
+            document.getElementById('streakCount').textContent = streak;
+            
+            // Update streak if user completed yesterday
+            const lastCompleteDate = StorageManager.load('lastCompleteDate');
+            const today = new Date().toDateString();
+            const yesterday = new Date(Date.now() - 86400000).toDateString();
+            
+            if (lastCompleteDate === yesterday && progressTracker.getCompletionPercentage() === 100) {
+                const newStreak = streak + 1;
+                StorageManager.save('streak', newStreak);
+                StorageManager.save('lastCompleteDate', today);
+                document.getElementById('streakCount').textContent = newStreak;
+            }
+        }
+    </script>
+</body>
+</html>
